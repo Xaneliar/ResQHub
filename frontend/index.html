@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResQHub Database Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        input {
+            width: 80%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            background: #007BFF;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        table {
+            margin-top: 10px;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        th {
+            background: #007BFF;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>ResQHub Database Manager</h2>
+        <input type="text" id="queryBox" placeholder="Enter Query...">
+        <br>
+        <button onclick="executeQuery()">Execute</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function executeQuery() {
+            let query = document.getElementById("queryBox").value;
+            let resultDiv = document.getElementById("result");
+
+            if (!query.trim()) {
+                resultDiv.innerHTML = "<p style='color:red;'>Query cannot be empty!</p>";
+                return;
+            }
+
+            try {
+                let response = await fetch("http://localhost:3000/execute", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ query: query }),
+                });
+
+                let data = await response.json();
+                
+                if (response.ok) {
+                    // Convert JSON result into a table
+                    if (data.length > 0) {
+                        let table = "<table><tr>";
+                        Object.keys(data[0]).forEach(key => {
+                            table += `<th>${key}</th>`;
+                        });
+                        table += "</tr>";
+
+                        data.forEach(row => {
+                            table += "<tr>";
+                            Object.values(row).forEach(value => {
+                                table += `<td>${value}</td>`;
+                            });
+                            table += "</tr>";
+                        });
+
+                        table += "</table>";
+                        resultDiv.innerHTML = table;
+                    } else {
+                        resultDiv.innerHTML = "<p>No results found.</p>";
+                    }
+                } else {
+                    resultDiv.innerHTML = `<p style='color:red;'>Error: ${data.error}</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p style='color:red;'>Server error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
